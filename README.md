@@ -2,11 +2,10 @@
 Non-Blocking FatFS library, target for embedded devices. Allows FatFS api calls both in polling mode, and asychronous mode, allowing access to a SD Card without blocking or holding up main program.
 12-Bit and 16-Bit NOT SUPPORTED
 
+Used and tested on STM32H755zi, specifically the CM4 core, with variables stored in the 0x2400000 portion of memory to allow idma access. Currently working using SDMMC with IDMA, purely interrupt driven. 
 
 ### How To Use
 Works similar to the normal FatFS library. There is a slight bit more overhead than the standard FatFS library, though some of it could be reduced with a little testing, eventually. 
-
-Used and tested on STM32H755zi, specifically the CM4 core, with variables stores in the 0x2400000 portion of memory to allow idma access. Currently working using SDMMC with IDMA, purely interrupt driven. 
 
 ##IMPORTANT: 
 Go to the nb_sd_diskio.cpp file, and modify the read, write, status functions to work with your IO functions. When the IO function is done, it should call the dResCallback, or the dStatCallback. Some non-working examples are shown. Prior to using NB_FatFS functions, **NB_FATFS_LinkDriver(&NB_SD_Driver, SDPath);** needs to be called
