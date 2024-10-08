@@ -8,22 +8,22 @@ Works similar to the normal FatFS library. There is a slight bit more overhead t
 Used and tested on STM32H755zi, specifically the CM4 core, with variables stores in the 0x2400000 portion of memory to allow idma access. Currently working using SDMMC with IDMA, purely interrupt driven. 
 
 ##IMPORTANT: 
-Go to the nb_sd_diskio.cpp file, and modify the read, write, status functions to work with your IO functions. When the IO function is done, it should call the dResCallback, or the dStatCallback. Some non-working examples are shown. Prior to using NB_FatFS functions, NB_FATFS_LinkDriver(&NB_SD_Driver, SDPath); needs to be called
+Go to the nb_sd_diskio.cpp file, and modify the read, write, status functions to work with your IO functions. When the IO function is done, it should call the dResCallback, or the dStatCallback. Some non-working examples are shown. Prior to using NB_FatFS functions, **NB_FATFS_LinkDriver(&NB_SD_Driver, SDPath);** needs to be called
 too link the driver functions. *Note: Linking Drivers is planned to eventually be removed*
 *Note: ioctl was previously an IO function, but was changed to be synchronous, accessing pre fetched data. The expectation is that the user will have the data needed for ioctl ready ahead of NB_FatFS function calls.*
 
-In the "option" folder, ccsbcs.cpp contains "getFatTime()". This can be modified to return a timestamp for files. 
+In the "option" folder, ccsbcs.cpp contains "**getFatTime()**". This can be modified to return a timestamp for files. 
 
 Functions are accessed through the "FatFS_NB" namespace and follow the same workflow as FatFS, with a couple notable exceptions.
 
-FatFS_NB::getBusy() is used to determine if NB_FatFS is currently performing any operations. If it is, no other functions shall be called, with the exception of the following functions:
-    FatFS_NB::getBusy()
-    FatFS_NB::getPollingCallReady()
-    FatFS_NB::pollingModeCall()
-*note: FatFS_NB::setPollingMode(bool) should be able to be called in the middle of a FatFS operation without causing any issues, and allow the ability to swap to polling mode mid operation. Warning: only very mild testing was done on this. User to verify their own testing.*
+**FatFS_NB::getBusy()** is used to determine if NB_FatFS is currently performing any operations. If it is, no other functions shall be called, with the exception of the following functions:
+    **FatFS_NB::getBusy()**
+    **FatFS_NB::getPollingCallReady()**
+    **FatFS_NB::pollingModeCall()**
+*note: **FatFS_NB::setPollingMode(bool)** should be able to be called in the middle of a FatFS operation without causing any issues, and allow the ability to swap to polling mode mid operation. Warning: only very mild testing was done on this. User to verify their own testing.*
 
-All main functions except the same parameters as FatFS, with an added requirement for a callback function as well. The callback function should be in the form of "[](void* res){} ,
-res then should be casted like so, "FatFS_NB::FRESULT result = * (FatFS_NB::FRESULT*)res;" , and then can be used to determine the success of the operation. 
+All main functions except the same parameters as FatFS, with an added requirement for a callback function as well. The callback function should be in the form of "**[](void* res){}** ,
+res then should be casted like so, "**FatFS_NB::FRESULT result = * (FatFS_NB::FRESULT*)res;**" , and then can be used to determine the success of the operation. 
 Here is a simple example of F_Mount:
 
 	Example
@@ -38,11 +38,11 @@ Here is a simple example of F_Mount:
                             }
                 });
 
-To enable polling mode call FatFS_NB::setPollingMode(true), or to disable it, FatFS_NB::setPollingMode(true);
-    When polling mode is on, the expectation is for FatFS_NB::getBusy(), FatFS_NB::getPollingCallReady(), and FatFS_NB::pollingModeCall() to be polled.
-    FatFS_NB::getBusy() is used to determine if NB_FatFS is still working on an operation, or if it has finished. 
-    FatFS_NB::getPollingCallReady() is used to determine if an IO function has returned, and the next portion of the operation needs to be executed.
-    FatFS_NB::pollingModeCall() executes the next portion of the operation, if such is ready. FatFS_NB::getPollingCallReady() is NOT required to be called prior, and is safe to repeatedly call
+To enable polling mode call **FatFS_NB::setPollingMode(true)**, or to disable it, **FatFS_NB::setPollingMode(true)**;
+    When polling mode is on, the expectation is for **FatFS_NB::getBusy()**, **FatFS_NB::getPollingCallReady()**, and **FatFS_NB::pollingModeCall()** to be polled.
+    **FatFS_NB::getBusy()** is used to determine if NB_FatFS is still working on an operation, or if it has finished. 
+    **FatFS_NB::getPollingCallReady()** is used to determine if an IO function has returned, and the next portion of the operation needs to be executed.
+    **FatFS_NB::pollingModeCall()** executes the next portion of the operation, if such is ready. **FatFS_NB::getPollingCallReady()** is NOT required to be called prior, and is safe to repeatedly call
 
     Example: 
                 FatFS_NB::setPollingMode(true);
