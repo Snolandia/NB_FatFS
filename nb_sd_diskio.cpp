@@ -31,7 +31,9 @@ static volatile uint32_t locker = 0;
 /* #define ENABLE_SCRATCH_BUFFER */
 
 #if defined(ENABLE_SCRATCH_BUFFER)
+#error // THIS PORTION HAS NOT BEEN TESTED OR ADJUSTED FOR NB_FATFS
 #if defined(ENABLE_SD_DMA_CACHE_MAINTENANCE)
+#error // THIS PORTION HAS NOT BEEN TESTED OR ADJUSTED FOR NB_FATFS
 ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
 #else
 __ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
@@ -68,6 +70,7 @@ const Diskio_drvTypeDef NB_SD_Driver =
 
 static void SD_CheckStatus(void (*callback)(DSTATUS))
 {
+    // This portion just for error checking. Will eventually be removed in future update.
     if(locker){
         while(1){
             // Error
@@ -75,12 +78,18 @@ static void SD_CheckStatus(void (*callback)(DSTATUS))
     }
     locker = locker +1;
 
+    // This portion is important to leave as is
     dstatCallback = callback;
     Stat = STA_NOT_INITIALIZED;    
+    //
+
+    // Setup IO function in this portion. Function must callback the callback function when done with IO function and pass the correct variable in order to work.
+    // Non Working Example provided.
+
     SDMMC::sdmmc1->setCommandResponseReceivedCallback(
     []()
     {
-        
+        // This portion just for error checking. Will eventually be removed in future update.
         if(!locker){
             while(1){
                 // Error
@@ -88,8 +97,10 @@ static void SD_CheckStatus(void (*callback)(DSTATUS))
         }
         locker = locker -1;
 
+        // Disable the callbacks
         SDMMC::sdmmc1->disableCommandResponseTimeoutCallback();
         SDMMC::sdmmc1->disableCommandResponseReceivedCallback();
+        // Clear the callbacks so no erronous callbacks are possible
         SDMMC::sdmmc1->setCommandResponseReceivedCallback([](){});
         SDMMC::sdmmc1->setCommandResponseTimeoutCallback([](){});
 
@@ -97,10 +108,15 @@ static void SD_CheckStatus(void (*callback)(DSTATUS))
         if(cardState == 0x00000004U){ // Card in transfer state
             Stat &= ~STA_NOT_INITIALIZED;
         }
+
+        /////////////////////////////////////////////////////////    IMPORTANT   ////////////////////////////////////////////////////////////////////
+        // Must call this callback
         dstatCallback(Stat); 
     });
+
     SDMMC::sdmmc1->setCommandResponseTimeoutCallback([](){
         
+        // This portion just for error checking. Will eventually be removed in future update.
         if(!locker){
             while(1){
                 // Error
@@ -108,16 +124,23 @@ static void SD_CheckStatus(void (*callback)(DSTATUS))
         }
         locker = locker -1;
 
+        // Disable the callbacks
         SDMMC::sdmmc1->disableCommandResponseTimeoutCallback();
         SDMMC::sdmmc1->disableCommandResponseReceivedCallback();
+        // Clear the callbacks so no erronous callbacks are possible
         SDMMC::sdmmc1->setCommandResponseReceivedCallback([](){});
         SDMMC::sdmmc1->setCommandResponseTimeoutCallback([](){});
+
+        /////////////////////////////////////////////////////////    IMPORTANT   ////////////////////////////////////////////////////////////////////
+        // Must call this callback
         dstatCallback(Stat); 
     });
 
+    // Enable callback
     SDMMC::sdmmc1->enableCommandResponseTimeoutCallback();
     SDMMC::sdmmc1->enableCommandResponseReceivedCallback();
     
+    // Perform IO function
     SDMMC::sdmmc1->getCardState();
 }
 
@@ -139,6 +162,7 @@ void SD_status(void (*callback)(DSTATUS))
  */
 void SD_read(BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESULT))
 {
+    // This portion just for error checking. Will eventually be removed in future update.
     if(locker){
         while(1){
             // Error
@@ -148,27 +172,41 @@ void SD_read(BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESULT))
     dresCallback = callback;
 
 #if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
+#error // THIS PORTION HAS NOT BEEN TESTED OR ADJUSTED FOR NB_FATFS
     uint32_t alignedAddr;
 #endif
+
+    // Setup IO function in this portion. Function must callback the callback function when done with IO function and pass the correct variable in order to work
+    // Non Working Example provided.
 
             
     SDMMC::sdmmc1->setDataTransferEndedCallback([](){
         
+        // This portion just for error checking. Will eventually be removed in future update.
         if(!locker){
             while(1){
                 // Error
             }
         }
             locker = locker -1;
+
+        // Disable callback
         SDMMC::sdmmc1->disableDataTransferEndedCallback();
         SDMMC::sdmmc1->setDataTransferEndedCallback([](){});
+
+        /////////////////////////////////////////////////////////    IMPORTANT   ////////////////////////////////////////////////////////////////////
+        // Must call this callback
         dresCallback(RES_OK);
     });
+
+    // Enable callback
     SDMMC::sdmmc1->enableDataTransferEndedCallback();
 
+    // Perform IO function
     SDMMC::sdmmc1->readBlock((uint32_t*)buff, count, (uint32_t)sector);
 
 #if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
+#error // THIS PORTION HAS NOT BEEN TESTED OR ADJUSTED FOR NB_FATFS
             /*
             the SCB_InvalidateDCache_by_Addr() requires a 32-Byte aligned address,
             adjust the address and the D-Cache size to invalidate accordingly.
@@ -193,15 +231,18 @@ void SD_read(BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESULT))
 
 void SD_write(const BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESULT))
 {    
+    // This portion just for error checking. Will eventually be removed in future update.
     if(locker){
         while(1){
             // Error
         }
     }
     locker = locker +1;
+
     dresCallback = callback;
 
 #if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
+#error // THIS PORTION HAS NOT BEEN TESTED OR ADJUSTED FOR NB_FATFS
         uint32_t alignedAddr;
         /*
         the SCB_CleanDCache_by_Addr() requires a 32-Byte aligned address
@@ -211,20 +252,32 @@ void SD_write(const BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESU
         SCB_CleanDCache_by_Addr((uint32_t *)alignedAddr, count * BLOCKSIZE + ((uint32_t)buff - alignedAddr));
 #endif
         
+        // Setup IO function in this portion. Function must callback the callback function when done with IO function and pass the correct variable in order to work
+    // Non Working Example provided.
+
+
         SDMMC::sdmmc1->setDataTransferEndedCallback([](){
             
+        // This portion just for error checking. Will eventually be removed in future update.
         if(!locker){
             while(1){
                 // Error
             }
         }
             locker = locker -1;
+
+            // Disable callback
             SDMMC::sdmmc1->disableDataTransferEndedCallback();
             SDMMC::sdmmc1->setDataTransferEndedCallback([](){});
+
+            /////////////////////////////////////////////////////////    IMPORTANT   ////////////////////////////////////////////////////////////////////
+            // Must call this callback
             dresCallback(RES_OK);
         });
+        // Enable callback
         SDMMC::sdmmc1->enableDataTransferEndedCallback();
 
+        // Perform IO function
         SDMMC::sdmmc1->writeBlock((uint32_t *)buff, count, (uint32_t)(sector));
 
         
@@ -241,10 +294,14 @@ void SD_write(const BYTE *buff, DWORD sector, UINT count, void (*callback)(DRESU
 #if _NB_USE_IOCTL == 1
 DRESULT SD_ioctl(BYTE cmd, void *buff)
 {
+    // Default to RES_ERROR
     DRESULT res = RES_ERROR;
-    // BSP_SD_CardInfo CardInfo;
+    
 
-    // if (Stat & STA_NOT_INITIALIZED)
+    /////////////////////////////////////////////////////////    IMPORTANT   ////////////////////////////////////////////////////////////////////
+    // Set up a function to return the following results. ioctl was previously an IO function, but was changed to be synchronous, accessing pre fetched data.
+    // The expectation is that the user will have the data needed for ioctl ready ahead of NB_FatFS function calls.
+
     if(SDMMC::sdmmc1->cardData.cardStatus != SDMMC::CardStatus::Ready)
     {
         return RES_NOT_READY;
