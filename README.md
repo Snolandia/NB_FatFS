@@ -7,7 +7,8 @@ Works similar to the normal FatFS library. There is a slight bit more overhead t
 
 Used and tested on STM32H755zi, specifically the CM4 core, with variables stores in the 0x2400000 portion of memory to allow idma access. Currently working using SDMMC with IDMA, purely interrupt driven. 
 
-IMPORTANT: Go to the nb_sd_diskio.cpp file, and modify the read, write, status functions to work with your IO functions. When the IO function is done, it should call the dResCallback, or the dStatCallback. Some non-working examples are shown. Prior to using NB_FatFS functions, NB_FATFS_LinkDriver(&NB_SD_Driver, SDPath); needs to be called
+##IMPORTANT: 
+Go to the nb_sd_diskio.cpp file, and modify the read, write, status functions to work with your IO functions. When the IO function is done, it should call the dResCallback, or the dStatCallback. Some non-working examples are shown. Prior to using NB_FatFS functions, NB_FATFS_LinkDriver(&NB_SD_Driver, SDPath); needs to be called
 too link the driver functions. *Note: Linking Drivers is planned to eventually be removed*
 *Note: ioctl was previously an IO function, but was changed to be synchronous, accessing pre fetched data. The expectation is that the user will have the data needed for ioctl ready ahead of NB_FatFS function calls.*
 
@@ -24,6 +25,8 @@ FatFS_NB::getBusy() is used to determine if NB_FatFS is currently performing any
 All main functions except the same parameters as FatFS, with an added requirement for a callback function as well. The callback function should be in the form of "[](void* res){} ,
 res then should be casted like so, "FatFS_NB::FRESULT result = * (FatFS_NB::FRESULT*)res;" , and then can be used to determine the success of the operation. 
 Here is a simple example of F_Mount:
+
+	Example
 
                 FatFS_NB::f_mount(&fs, SDPath, 1, [](void *result){
                     FatFS_NB::FRESULT res = *(FatFS_NB::FRESULT*)result;
