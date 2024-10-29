@@ -1130,10 +1130,12 @@ namespace FatFS_NB {
 		callNextCallback();
 		return;
 	}
+
+	static void remove_chain_loop(remove_chain_strut* strut);
 	static void remove_chain_loop_c(remove_chain_strut *strut) {
 		strut->clst = strut->nxt; /* Next cluster */
 		if (strut->clst < strut->fs->numberOfFatEntries) { /* Repeat while not the last link */
-			remove_chain_loop_c(strut);
+			remove_chain_loop(strut);
 			return;
 		} else {
 			remove_chain_end(strut);
